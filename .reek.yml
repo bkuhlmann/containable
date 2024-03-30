@@ -3,5 +3,8 @@ exclude_paths:
   - vendor
 
 detectors:
+  ControlParameter:
+    exclude:
+      - Containable::Register#call
   LongParameterList:
     enabled: false
