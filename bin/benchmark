@@ -1,0 +1,65 @@
+#! /usr/bin/env ruby
+# frozen_string_literal: true
+
+require "bundler/inline"
+
+gemfile true do
+  source "https://rubygems.org"
+
+  gem "benchmark-ips"
+  gem "dry-container"
+  gem "containable", path: ".."
+  gem "debug"
+end
+
+module ContainerOne
+  extend Containable
+
+  register :one, 1
+  register(:two) { 2 }
+  register :three, -> text { text }
+  register(:four) { Object.new }
+end
+
+module ContainerTwo
+  extend Dry::Container::Mixin
+
+  register :one, 1
+  register(:two) { 2 }
+  register :three, -> text { text }
+  register(:four, memoize: true) { Object.new }
+end
+
+Benchmark.ips do |benchmark|
+  benchmark.config time: 5, warmup: 2
+
+  benchmark.report "Containable" do
+    ContainerOne["one"]
+    ContainerOne["two"]
+    ContainerOne["three"]
+    ContainerOne["four"]
+  end
+
+  benchmark.report "Dry Container" do
+    ContainerTwo["one"]
+    ContainerTwo["two"]
+    ContainerTwo["three"]
+    ContainerTwo["four"]
+  end
+
+  benchmark.compare!
+end
+
+__END__
+
+ruby 3.3.0 (2023-12-25 revision 5124f9ac75) +YJIT [arm64-darwin23.4.0]
+Warming up --------------------------------------
+         Containable   805.695k i/100ms
+       Dry Container   326.053k i/100ms
+Calculating -------------------------------------
+         Containable      8.340M (± 0.3%) i/s -     41.896M in   5.023854s
+       Dry Container      3.403M (± 0.4%) i/s -     17.281M in   5.078142s
+
+Comparison:
+         Containable:  8339509.3 i/s
+       Dry Container:  3403033.3 i/s - 2.45x  slower
