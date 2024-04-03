@@ -4,7 +4,7 @@ title: Containable
 abstract: A thread-safe container for use with dependency injection.
 version: 0.0.0
 license: Hippocratic-2.1
-date-released: 2024-03-22
+date-released: 2024-04-03
 authors:
   - family-names: Kuhlmann
     given-names: Brooke
@@ -12,5 +12,9 @@ authors:
     orcid: https://orcid.org/0000-0002-5810-6268
 keywords:
  - ruby
+ - container
+ - dependency
+ - injection
+ - inversion
 repository-code: https://github.com/bkuhlmann/containable
 repository-artifact: https://rubygems.org/gems/containable

@@ -1,5 +1,15 @@
 = Versions
 
-== 0.0.0 (2024-03-22)
+== 0.0.0 (2024-04-03)
 
-* Added initial implementation.
+* 🟢 Added Concurrent Ruby gem - Brooke Kuhlmann
+* 🟢 Added RSpec container shared examples - Brooke Kuhlmann
+* 🟢 Added RSpec stub shared examples - Brooke Kuhlmann
+* 🟢 Added benchmark - Brooke Kuhlmann
+* 🟢 Added documentation - Brooke Kuhlmann
+* 🟢 Added primary Object API - Brooke Kuhlmann
+* 🟢 Added project skeleton - Brooke Kuhlmann
+* 🟢 Added registry - Brooke Kuhlmann
+* 🟢 Added resolver - Brooke Kuhlmann
+* 🟢 Added test suite functionality - Brooke Kuhlmann
+* 🟢 Added vault - Brooke Kuhlmann

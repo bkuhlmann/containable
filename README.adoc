@@ -2,17 +2,28 @@
 :toclevels: 5
 :figure-caption!:
 
+:dependency_injection_containers_link: link:https://alchemists.io/articles/dependency_injection_containers[Dependency Injection Containers]
+:infusible_link: link:https://alchemists.io/projects/infusible[Infusible]
+:rspec_link: link:https://rspec.info[RSpec]
+:test_doubles_link: link:https://alchemists.io/articles/rspec_test_doubles[Test Doubles]
+
 = Containable
+
+This gem provides a thread-safe container for defining dependencies for reuse within your application. Coupled with the {infusible_link} gem, this powerful combination makes {dependency_injection_containers_link} simple to implement, test, and maintain.
 
 toc::[]
 
 == Features
 
-== Screencasts
+* Provides a thread-safe dependency injection container.
+* Encourages composition over inheritance.
+* Includes test suite support so you can swap in {test_doubles_link} if desired.
+* Compatible with {infusible_link}.
 
 == Requirements
 
 . link:https://www.ruby-lang.org[Ruby].
+. A strong understanding of {dependency_injection_containers_link}.
 
 == Setup
 
@@ -47,6 +58,453 @@ require "containable"
 ----
 
 == Usage
+
+You can immediately use this gem by creating a container, extending the container with functionality from this gem, and register any/all dependencies as desired. Example:
+
+[source,ruby]
+----
+require "containable"
+
+module Container
+  extend Containable
+
+  register :literal, 1
+  register(:echo) { |text| text }
+end
+
+puts Container[:literal]           # 1
+puts Container[:echo].call "test"  # "test"
+----
+
+The rest of this section will expand upon what is shown above.
+
+=== Modules
+
+Containers _must be modules_. For example, attempting to turn a class into a container is not allowed:
+
+[source,ruby]
+----
+require "containable"
+
+class Container
+  extend Containable
+end
+
+# Only a module can be a container. (TypeError)
+----
+
+This is important since containers are only meant to hold your dependencies and nothing else. Modules are the perfect construct for this.
+
+=== Registration
+
+As shown above, the best way to register dependencies is as you define your container. The most basic is via a key/value pair:
+
+[source,ruby]
+----
+require "containable"
+
+module Container
+  extend Containable
+
+  register :demo, 1
+end
+----
+
+With the above, `1` (literal) will be associated with the `:demo` key. This is perfect for registering literals, constants, or any objects you immediately want evaluated or have a reference to. To lazily register a dependency, use a block with parameters:
+
+[source,ruby]
+----
+require "containable"
+
+module Container
+  extend Containable
+
+  register(:demo) { Object.new }
+end
+----
+
+In this case the `:demo` key is associated with an instance of an object but the instance _will only be realized when first resolved_. Until the `:demo` key is resolved, the object is not instantiated and remains a closure (more on resolving dependencies shortly). You can also register procs, lambdas, and functions in the same manner:
+
+[source,ruby]
+----
+require "containable"
+
+function = proc { 3 }
+
+module Container
+  extend Containable
+
+  register :one, proc { 1 }
+  register :two, -> { 2 }
+  register(:three, &function)
+end
+----
+
+As you can see, registration is quite flexible. That said, you only register either a value or closure but not both. For example, if you register both a value _and_ a closure you'll get a warning (as printed as standard error output):
+
+[source,ruby]
+----
+require "containable"
+
+module Container
+  extend Containable
+
+  register(:demo, "bogus") { 1 }
+end
+
+# Registration of value is ignored since block takes precedence.
+----
+
+While providing the value isn't harmful, it is unnecessary and wasteful. Instead, supply a value or a closure _but not both_.
+
+You can also register dependencies after the fact since the container is open, by default. Example:
+
+[source,ruby]
+----
+require "containable"
+
+module Container
+  extend Containable
+
+  register :one, 1
+end
+
+Container.register :two, 2
+Container[:three] = 3
+----
+
+With the above, a combination of `.register` and `.[]=` (setter) messages are used. While the latter is handy the former should be preferred for improved readability.
+
+=== Resolution
+
+Now that you understand how to register dependencies, we can talk about resolving them. There are two ways to resolve a dependency. Example:
+
+[source,ruby]
+----
+Container[:demo]
+Container.resolve(:demo)
+----
+
+Both messages are acceptable but using `.[]` (getter) is recommended due to being succinct, requires less typing, and allows the container to feel more like a `Hash`. Internally, when resolving a dependency, all keys are stored as strings which means you can use symbols or strings interchangeably except when using namespaces (more on this shortly). Example:
+
+[source,ruby]
+----
+Container[:demo]   # "example"
+Container["demo"]  # "example"
+----
+
+When discussing registration earlier, we saw you can register values and closures. A value can also be a closure but if a block is registered -- in addition to the value -- the block takes precedence over the value.
+
+What hasn't been discussed is the _kind_ of closure used when registering a value or block. If a closure takes _no parameters_, then the closure will be resolved immediately when resolving the key for the first time. Any closure that takes one more more parameters will never be resolved which means you can call the closure directly when needed. To illustrate, consider the following:
+
+[source,ruby]
+----
+require "containable"
+
+module Container
+  extend Containable
+
+  register :one, proc { 1 }
+  register(:two) { |text| text.upcase }
+  register :three, -> text { text.reverse }
+end
+
+Container[:one]    # 1
+Container[:two]    # #<Proc:0x000000012e9f8718 /demo:23>
+Container[:three]  # #<Proc:0x000000012e9f8628 /demo:24 (lambda)>
+----
+
+With the above, you can see `:one` was immediately resolved to the value of `1` even though it was wrapped in a closure to begin with. This happened because the closure had no parameters so was safe to resolve. Again, this allows you to lazily resolve a dependency until you need it.
+
+For keys `:two` and `:three`, we have a closure that has at least one parameter so remains a closure so you can supply the arguments you need later. Here's a closer look of using the `:two` and `:three` dependencies:
+
+[source,ruby]
+----
+Container[:two].call "demo"    # "DEMO"
+Container[:three].call "demo"  # "omed"
+----
+
+In all of these situations, we have closures supplied as values or blocks but only closures with out parameters are resolved (i.e. unwrapped).
+
+=== Namespaces
+
+As hinted at earlier, you can namespace your dependencies for improved organization. Example:
+
+[source,ruby]
+----
+require "containable"
+
+module Container
+  extend Containable
+
+  namespace :one do
+    register :blue, "blue"
+  end
+
+  namespace :two do
+    register :green, "green"
+  end
+
+  namespace "three" do
+    register :grey, "grey"
+    register :silver, "silver"
+  end
+end
+----
+
+There is no limit on the number of namespaces used or how deep they are nested. That said, this functionality _should not be abused_ by sticking to either one or two levels of hierarchy. Anything more than that and you should reflect if your implementation is overly complex in order to refactor accordingly.
+
+As with registration, you can use symbols, strings, or both for your namespaces since they are stored internally as strings. Namespaces are delimited by periods (`.`) so you _must_ use a string for your key to resolve them. Example:
+
+[source,ruby]
+----
+Container["one.blue"]      # "blue"
+Container["two.green"]     # "green"
+Container["three.silver"]  # "silver"
+----
+
+=== Enumeration
+
+Limited enumeration of your container is possible. Given the following:
+
+[source,ruby]
+----
+require "containable"
+
+module Container
+  extend Containable
+
+  register :one, 1
+  register :two, 2
+end
+----
+
+...this means you can use all of the following messages:
+
+[source,ruby]
+----
+Container.each { |key, value| puts "#{key}=#{value}" }
+# one=1
+# two=2
+
+Container.each_key { |key| puts "Key: #{key}" }
+# Key: one
+# Key: two
+
+Container.key? :one   # false
+Container.key? "one"  # true
+
+Container.keys        # ["one", "two"]
+----
+
+=== Freezing
+
+You can freeze your container and immediately check if it is frozen. Example:
+
+[source,ruby]
+----
+require "containable"
+
+module Container
+  extend Containable
+
+  register :demo, "An example."
+  freeze
+end
+
+Container.frozen?  # true
+----
+
+You can also freeze your container after the fact by messaging `.freeze` directly on the container: `Container.freeze`. Once a container if frozen, registration of additional dependencies will result in an error:
+
+[source,]
+----
+Container.register :another, "One more."
+# Can't modify frozen container. (FrozenError)
+----
+
+Once frozen, the container can't be unfrozen unless you duplicate it (see below).
+
+=== Duplicates
+
+You can duplicate a container via the following (which will unfreeze the container if previously frozen):
+
+[source,ruby]
+----
+container = Container.dup
+container.name
+# "module:container"
+
+Other = Container.dup
+Other.name
+# "Other"
+----
+
+As you can see a container, once duplicated, can be assigned to a local variable or a new constant. When assigning to a variable, the container will use a temporary name of `module:container` to help identify it.
+
+=== Clones
+
+Cloning a container is identical to duplicating a container _except_ if the container is frozen then the clone will be frozen too. Example:
+
+[source,ruby]
+----
+Container.freeze
+Container.clone.frozen?  # true
+----
+
+=== Customization
+
+You can customize how the container registers and resolves dependencies by creating your own register and resolver objects. For example, here's how to use a custom register that doesn't care if you override an existing key.
+
+[source,ruby]
+----
+require "containable"
+
+class CustomRegister < Containable::Register
+  def call(key, value = nil, &block) = dependencies[namespacify(key)] = block || value
+end
+
+module Container
+  extend Containable[register: CustomRegister]
+
+  register :one, 1
+  register :one, "override"
+end
+
+Container[:one]  # "override"
+----
+
+...and here's an example with a custom resolver that only allows specific keys to be resolved:
+
+[source,ruby]
+----
+require "containable"
+
+class CustomResolver < Containable::Resolver
+  def initialize *, allowed_keys: %i[one three]
+    super(*)
+    @allowed_keys = allowed_keys
+  end
+
+  def call key
+    fail KeyError, "Only use these keys: #{allowed_keys.inspect}" unless allowed_keys.include? key
+
+    super
+  end
+
+  private
+
+  attr_reader :allowed_keys
+end
+
+module Container
+  extend Containable[resolver: CustomResolver]
+
+  register :one, 1
+  register :two, 2
+  register :three, 3
+end
+
+Container[:one]    # 1
+Container[:two]    # Only use these keys: [:one, :three] (KeyError)
+Container[:three]  # 3
+----
+
+In both cases, you only need to inject your custom register or resolver when extending your container with `Containable`. Both of these classes should inherit from either `Containable::Register` or `Containable::Resolver` to customize behavior as you like. Definitely check out the source code of both these classes to learn more and customize as desired.
+
+=== Infusible
+
+To fully leverage the power of this gem, check out {infusible_link}. You can get far with simple containers but if you want to supercharge your containers and make your architecture truly come alive then make sure to couple this gem with the {infusible_link} gem. 🚀
+
+=== Tests
+
+As you architect your implementation, you'll want to swap out your original dependencies with {test_doubles_link} to simplify testing especially for situations, like making HTTP requests, with a fake. For demonstration purposes, I'll assume you are using {rspec_link} but you can adapt for whatever testing framework you are using.
+
+Consider the following:
+
+[source,ruby]
+----
+module Container
+  extend Containable
+
+  register :kernel, Kernel
+end
+
+class Demo
+  def initialize container: Container
+    @container = container
+  end
+
+  def speak(text) = kernel.puts text
+
+  private
+
+  attr_reader :container
+
+  def kernel = container[__method__]
+end
+----
+
+With our implementation defined, we can test as follows:
+
+[source,ruby]
+----
+RSpec.describe Demo do
+  subject(:demo) { Demo.new }
+
+  let(:kernel) { class_spy Kernel }
+
+  before { Container.stub! kernel: }
+  after { Container.restore }
+
+  describe "#call" do
+    it "prints message" do
+      demo.speak "Hello"
+      expect(kernel).to have_received(:puts).with("Hello")
+    end
+  end
+end
+----
+
+Notice there is little setup required to test the injected dependencies. Simply define what you want stubbed in your `before` and `after` blocks. That's it!
+
+While the above works great for a single spec, over time you'll want to reduce duplicated setup by using a shared context. Here's a rewrite of the above spec which significantly reduces duplication when needing to test multiple objects using the same dependencies:
+
+[source,ruby]
+----
+# spec/support/shared_contexts/application_container.rb
+
+RSpec.shared_context "with application dependencies" do
+  let(:kernel) { class_spy Kernel }
+
+  before { Container.stub! kernel: }
+  after { Container.restore }
+end
+----
+
+[source,ruby]
+----
+# spec/lib/demo_spec.rb
+
+RSpec.describe Demo do
+  subject(:demo) { Demo.new }
+
+  include_context "with application dependencies"
+
+  describe "#call" do
+    it "prints message" do
+      demo.speak "Hello"
+      expect(kernel).to have_received(:puts).with("Hello")
+    end
+  end
+end
+----
+
+You'll notice, in all of the examples, only two methods are used: `.stub!` and `.restore`. The first allows you supply keyword arguments of all dependencies you want stubbed. The last ensures your test suite is properly cleaned up so all stubs are removed and the container is restored to it's original state. If you don't restore your container after each spec, you'll end up with stubs leaking across your specs and {rspec_link} will error to the same effect as well.
+
+_Always_ use `.stub!` to set your container up for testing. Once setup, you can add more stubs by using the `.stub` method (without the bang). So, to recap, use `.stub!` as a one-liner for setup and initial stubs then use `.stub` to add more stubs after the fact. Finally, ensure you restore (i.e. `.restore`) your container for proper cleanup after each test.
+
+‼️ Use of `.stub!`, while convenient for testing, should -- under no circmstances -- be used in production code because it is meant for testing purposes only.
 
 == Development
 
