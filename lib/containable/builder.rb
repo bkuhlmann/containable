@@ -4,7 +4,7 @@ require "concurrent/hash"
 
 module Containable
   # Provides safe registration and resolution of dependencies.
-  class Vault < Module
+  class Builder < Module
     def initialize dependencies = Concurrent::Hash.new, register: Register, resolver: Resolver
       super()
 

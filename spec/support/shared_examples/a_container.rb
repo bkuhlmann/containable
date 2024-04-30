@@ -5,7 +5,7 @@ require "spec_helper"
 RSpec.shared_examples "a container" do
   describe "#extended" do
     it "fails when not extending a module" do
-      expectation = proc { Class.new.extend Containable::Vault.new }
+      expectation = proc { Class.new.extend Containable::Builder.new }
       expect(&expectation).to raise_error(TypeError, "Only a module can be a container.")
     end
   end
