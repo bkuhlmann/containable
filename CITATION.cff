@@ -1,10 +1,10 @@
 cff-version: 1.2.0
 message: Please use the following metadata when citing this project in your work.
 title: Containable
-abstract: A thread-safe container for use with dependency injection.
-version: 0.0.0
+abstract: A thread-safe dependency injection container.
+version: 0.1.0
 license: Hippocratic-2.1
-date-released: 2024-04-03
+date-released: 2024-04-30
 authors:
   - family-names: Kuhlmann
     given-names: Brooke

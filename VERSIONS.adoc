@@ -1,5 +1,13 @@
 = Versions
 
+== 0.1.0 (2024-04-30)
+
+* 🔼 Updated builder to be frozen by default - Brooke Kuhlmann
+* 🔼 Updated to Git Lint 7.3.0 - Brooke Kuhlmann
+* 🔼 Updated to Rake 13.2.0 - Brooke Kuhlmann
+* 🔼 Updated to Ruby 3.3.1 - Brooke Kuhlmann
+* 🔁 Refactored vault as builder - Brooke Kuhlmann
+
 == 0.0.0 (2024-04-03)
 
 * 🟢 Added Concurrent Ruby gem - Brooke Kuhlmann
