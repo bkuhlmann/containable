@@ -16,6 +16,8 @@ module Containable
 
       alias_method :[]=, :register
       alias_method :[], :resolve
+
+      freeze
     end
 
     def extended descendant
