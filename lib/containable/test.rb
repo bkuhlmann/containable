@@ -3,7 +3,7 @@
 module Containable
   # Allows stubbing of dependencies for testing purposes only.
   module Test
-    def resolve(key) = stubs.fetch(key.to_s) { super(key) }
+    def resolve(key) = stubs.fetch(key.to_s) { super }
 
     alias [] resolve
 
