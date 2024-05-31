@@ -1,5 +1,14 @@
 = Versions
 
+== 0.2.0 (2024-05-30)
+
+* ✅ Fixed RuboCop Style/SuperArguments issue - Brooke Kuhlmann
+* ✅ Fixed gem certificate URL for secure installs - Brooke Kuhlmann
+* 🟢 Added IRB Kit gem - Brooke Kuhlmann
+* 🔼 Updated RSpec configuration to ignore backtraces in pending specs - Brooke Kuhlmann
+* 🔼 Updated citation URLs - Brooke Kuhlmann
+* 🔼 Updated to Ruby 3.3.2 - Brooke Kuhlmann
+
 == 0.1.0 (2024-04-30)
 
 * 🔼 Updated builder to be frozen by default - Brooke Kuhlmann
