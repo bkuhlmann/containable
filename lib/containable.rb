@@ -18,4 +18,6 @@ module Containable
     extend Test
     stub(**)
   end
+
+  def restore = false
 end

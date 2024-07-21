@@ -36,4 +36,10 @@ RSpec.describe Containable do
       expect(container["two"]).to eq(2)
     end
   end
+
+  describe "#restore" do
+    it "answers false" do
+      expect(container.restore).to be(false)
+    end
+  end
 end
