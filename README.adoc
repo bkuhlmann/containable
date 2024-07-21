@@ -93,7 +93,7 @@ end
 # Only a module can be a container. (TypeError)
 ----
 
-This is important since containers are only meant to hold your dependencies and nothing else. Modules are the perfect construct for this.
+This is important since containers are only meant to hold your dependencies and nothing else. Modules are perfect for this.
 
 === Registration
 
@@ -174,6 +174,19 @@ Container[:three] = 3
 ----
 
 With the above, a combination of `.register` and `.[]=` (setter) messages are used. While the latter is handy the former should be preferred for improved readability.
+
+⚠️ Due to registration being flexible to begin with, avoid nesting closures. Example:
+
+[source,ruby]
+----
+# No
+register(:sanitizer) { -> content { Sanitize.fragment content, Sanitize::Config::BASIC } }
+
+# Yes
+register :sanitizer, -> content { Sanitize.fragment content, Sanitize::Config::BASIC }
+----
+
+While the former will work, there is no benefit to nesting like this. The latter is more performant because you don't have to unwrap the nested closure to achieve the same functionality since there is nothing to achieve from the lazy resolution of the sanitize functionality.
 
 === Resolution
 
@@ -504,7 +517,7 @@ You'll notice, in all of the examples, only two methods are used: `.stub!` and `
 
 _Always_ use `.stub!` to set your container up for testing. Once setup, you can add more stubs by using the `.stub` method (without the bang). So, to recap, use `.stub!` as a one-liner for setup and initial stubs then use `.stub` to add more stubs after the fact. Finally, ensure you restore (i.e. `.restore`) your container for proper cleanup after each test.
 
-‼️ Use of `.stub!`, while convenient for testing, should -- under no circmstances -- be used in production code because it is meant for testing purposes only.
+‼️ Use of `.stub!`, while convenient for testing, should -- under no circumstances -- be used in production code because it is meant for testing purposes only.
 
 == Development
 
