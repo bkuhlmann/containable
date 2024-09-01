@@ -1,5 +1,12 @@
 = Versions
 
+== 0.5.0 (2024-09-01)
+
+* 🟢 Added README Developer Certificate of Origin documentation - Brooke Kuhlmann
+* 🔼 Updated gem specification documentation URI as homepage URI - Brooke Kuhlmann
+* 🔼 Updated gem specification to support Ruby 3.4.0 - Brooke Kuhlmann
+* ⛔️ Removed Guard - Brooke Kuhlmann
+
 == 0.4.0 (2024-07-21)
 
 * 🟢 Added top level restore method - Brooke Kuhlmann
