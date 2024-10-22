@@ -79,7 +79,7 @@ module Containable
 
       define_method :dup do
         instance = target.new dependencies.dup, register: local_register, resolver: local_resolver
-        Module.new.set_temporary_name("module:container").extend instance
+        Module.new.set_temporary_name("containable").extend instance
       end
     end
 

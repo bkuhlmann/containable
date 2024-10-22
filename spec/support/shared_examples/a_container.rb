@@ -189,7 +189,7 @@ RSpec.shared_examples "a container" do
   describe ".clone" do
     it "sets temporary name" do
       duplicate = container.clone
-      expect(duplicate.name).to eq("module:container")
+      expect(duplicate.name).to eq("containable")
     end
 
     it "duplicates with unresolved values intact" do
@@ -212,7 +212,7 @@ RSpec.shared_examples "a container" do
   describe ".dup" do
     it "sets temporary name" do
       duplicate = container.clone
-      expect(duplicate.name).to eq("module:container")
+      expect(duplicate.name).to eq("containable")
     end
 
     it "duplicates with unresolved values intact" do
