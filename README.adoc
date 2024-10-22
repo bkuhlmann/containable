@@ -346,14 +346,14 @@ You can duplicate a container via the following (which will unfreeze the contain
 ----
 container = Container.dup
 container.name
-# "module:container"
+# "containable"
 
 Other = Container.dup
 Other.name
 # "Other"
 ----
 
-As you can see a container, once duplicated, can be assigned to a local variable or a new constant. When assigning to a variable, the container will use a temporary name of `module:container` to help identify it.
+As you can see a container, once duplicated, can be assigned to a local variable or a new constant. When assigning to a variable, the container will use a temporary name of `containable` for identification.
 
 === Clones
 
