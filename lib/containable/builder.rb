@@ -76,7 +76,6 @@ module Containable
     def define_dup target = self.class,
                    local_register: register.class,
                    local_resolver: resolver.class
-
       define_method :dup do
         instance = target.new dependencies.dup, register: local_register, resolver: local_resolver
         Module.new.set_temporary_name("containable").extend instance
