@@ -1,5 +1,12 @@
 = Versions
 
+== 1.0.0 (2024-12-27)
+
+* ✅ Fixed RuboCop Layout/EmptyLinesAroundMethodBody issue - Brooke Kuhlmann
+* 🔼 Updated to Caliber 0.68.0 - Brooke Kuhlmann
+* 🔼 Updated to IRB Kit 1.0.0 - Brooke Kuhlmann
+* 🔼 Updated to Ruby 3.4.0 - Brooke Kuhlmann
+
 == 0.6.0 (2024-11-09)
 
 * 🔼 Updated to Caliber 0.64.0 - Brooke Kuhlmann

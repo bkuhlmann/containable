@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |spec|
   spec.name = "containable"
-  spec.version = "0.6.0"
+  spec.version = "1.0.0"
   spec.authors = ["Brooke Kuhlmann"]
   spec.email = ["brooke@alchemists.io"]
   spec.homepage = "https://alchemists.io/projects/containable"
@@ -23,7 +23,7 @@ Gem::Specification.new do |spec|
   spec.cert_chain = [Gem.default_cert_path]
 
   spec.required_ruby_version = "~> 3.4"
-  spec.add_dependency "concurrent-ruby", "~> 1.2"
+  spec.add_dependency "concurrent-ruby", "~> 1.3"
 
   spec.extra_rdoc_files = Dir["README*", "LICENSE*"]
   spec.files = Dir["*.gemspec", "lib/**/*"]
