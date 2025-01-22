@@ -97,7 +97,7 @@ This is important since containers are only meant to hold your dependencies and 
 
 === Registration
 
-As shown above, the best way to register dependencies is as you define your container. The most basic is via a key/value pair:
+The best way to register dependencies is when you define your container. The most basic is via a key/value pair:
 
 [source,ruby]
 ----
@@ -123,7 +123,7 @@ module Container
 end
 ----
 
-In this case the `:demo` key is associated with an instance of an object but the instance _will only be realized when first resolved_. Until the `:demo` key is resolved, the object is not instantiated and remains a closure (more on resolving dependencies shortly). You can also register procs, lambdas, and functions in the same manner:
+In this case the `:demo` key is associated with an instance of an object but the instance _will only be initialized when resolved_. Until the `:demo` key is resolved, the object is not instantiated and remains a closure (see xref:_resolution[Resolution]). You can also register procs, lambdas, and functions in the same manner:
 
 [source,ruby]
 ----
@@ -140,7 +140,26 @@ module Container
 end
 ----
 
-As you can see, registration is quite flexible. That said, you only register either a value or closure but not both. For example, if you register both a value _and_ a closure you'll get a warning (as printed as standard error output):
+If you want closures to be cached or be fresh when resolved, use the `as` keyword. Example:
+
+[source,ruby]
+----
+module Container
+  extend Containable
+
+  register :one, as: :cache, proc { Object.new }
+  register :two, as: :fresh, proc { Object.new }
+end
+----
+
+Use `:cache` and `:fresh` to direct how your closures will be resolved. Here's what each does:
+
+* `+:cache+`: Ensures the same object is answered each time the key is resolved. In the above example, this means the `one` dependency will always answer the _same_ instance of an `Object` when resolved. This is default behavior so you don't need to define this key and is only shown for explicit illustration purposes.
+* `+:fresh+`: Ensures a new object is answered each time the key is resolved. In the above example, this means that the `two` dependency will always answer a _different_ instance of an `Object`. You want to use this when you want to lazily resolve a dependency while still wanting a new instance each time.
+
+💡 The `as` key is only applied when using a closure with no parameters and is ignored otherwise. This means you don't need to supply this key when using literals.
+
+As you can see, registration is quite flexible. That said, you only need to register a value or closure but not both. For example, if you register both a value _and_ a closure you'll get a warning (as printed as standard error output):
 
 [source,ruby]
 ----
@@ -173,9 +192,9 @@ Container.register :two, 2
 Container[:three] = 3
 ----
 
-With the above, a combination of `.register` and `.[]=` (setter) messages are used. While the latter is handy the former should be preferred for improved readability.
+With the above, a combination of `.register` and `.[]=` (setter) messages are used. While the latter is handy, the former should be preferred for improved readability.
 
-⚠️ Due to registration being flexible to begin with, avoid nesting closures. Example:
+⚠️ Due to registration being so flexible, avoid nesting closures. Example:
 
 [source,ruby]
 ----
@@ -190,7 +209,7 @@ While the former will work, there is no benefit to nesting like this. The latter
 
 === Resolution
 
-Now that you understand how to register dependencies, we can talk about resolving them. There are two ways to resolve a dependency. Example:
+There are two ways to resolve a dependency. Example:
 
 [source,ruby]
 ----
@@ -198,7 +217,7 @@ Container[:demo]
 Container.resolve(:demo)
 ----
 
-Both messages are acceptable but using `.[]` (getter) is recommended due to being succinct, requires less typing, and allows the container to feel more like a `Hash`. Internally, when resolving a dependency, all keys are stored as strings which means you can use symbols or strings interchangeably except when using namespaces (more on this shortly). Example:
+Both messages are acceptable but using `.[]` (getter) is recommended due to being succinct, requires less typing, and allows the container to feel like a `Hash`. Internally, when resolving a dependency, all keys are stored as strings which means you can use symbols or strings interchangeably except when using namespaces (more on this shortly). Example:
 
 [source,ruby]
 ----
@@ -206,9 +225,9 @@ Container[:demo]   # "example"
 Container["demo"]  # "example"
 ----
 
-When discussing registration earlier, we saw you can register values and closures. A value can also be a closure but if a block is registered -- in addition to the value -- the block takes precedence over the value.
+When discussing registration earlier, we saw you can register values and closures. A value can also be a closure but if a block is registered -- in addition to the value -- the block takes precedence.
 
-What hasn't been discussed is the _kind_ of closure used when registering a value or block. If a closure takes _no parameters_, then the closure will be resolved immediately when resolving the key for the first time. Any closure that takes one more more parameters will never be resolved which means you can call the closure directly when needed. To illustrate, consider the following:
+What hasn't been discussed is the _kind_ of closure used when registering a value or block. If a closure has _no parameters_, then the closure will be resolved immediately when resolving the key for the first time. Any closure that takes one more more parameters will never be resolved which means you can call the closure directly when needed. To illustrate, consider the following:
 
 [source,ruby]
 ----
@@ -222,14 +241,14 @@ module Container
   register :three, -> text { text.reverse }
 end
 
-Container[:one]    # 1
-Container[:two]    # #<Proc:0x000000012e9f8718 /demo:23>
-Container[:three]  # #<Proc:0x000000012e9f8628 /demo:24 (lambda)>
+Container[:one]                # 1
+Container[:two]                # #<Proc:0x000000012e9f8718 /demo:23>
+Container[:three]              # #<Proc:0x000000012e9f8628 /demo:24 (lambda)>
 ----
 
 With the above, you can see `:one` was immediately resolved to the value of `1` even though it was wrapped in a closure to begin with. This happened because the closure had no parameters so was safe to resolve. Again, this allows you to lazily resolve a dependency until you need it.
 
-For keys `:two` and `:three`, we have a closure that has at least one parameter so remains a closure so you can supply the arguments you need later. Here's a closer look of using the `:two` and `:three` dependencies:
+For keys `:two` and `:three`, we have a closure that has at least one parameter so remains a closure. This allows you to supply required arguments later. Here's a closer look of using the `:two` and `:three` dependencies:
 
 [source,ruby]
 ----
@@ -238,6 +257,27 @@ Container[:three].call "demo"  # "omed"
 ----
 
 In all of these situations, we have closures supplied as values or blocks but only closures with out parameters are resolved (i.e. unwrapped).
+
+When using the `as` key, you can control if you get a cached or fresh instance. Example:
+
+[source,ruby]
+----
+require "containable"
+
+module Container
+  extend Containable
+
+  register(:one) { Object.new }
+  register(:two, as: :fresh) { Object.new }
+end
+
+Container[:one]    # #<Object:0x000000012d135b90>
+Container[:one]    # #<Object:0x000000012d135b90>
+Container[:two]    # #<Object:0x000000012d237728>
+Container[:two]    # #<Object:0x000000012d2de550>
+----
+
+Notice `one` always answers the same instance of an `Object` while `two` always answers a new instance of `Object`. By using `:fresh`, this allows you to lazily evaluate your closure while disabling default caching support.
 
 === Namespaces
 
@@ -278,7 +318,7 @@ Container["three.silver"]  # "silver"
 
 === Enumeration
 
-Limited enumeration of your container is possible. Given the following:
+Enumeration is possible but limited. Given the following:
 
 [source,ruby]
 ----
@@ -353,7 +393,7 @@ Other.name
 # "Other"
 ----
 
-As you can see a container, once duplicated, can be assigned to a local variable or a new constant. When assigning to a variable, the container will use a temporary name of `containable` for identification.
+A container, once duplicated, can be assigned to a local variable or a new constant. When assigning to a variable, the container will default to a temporary name of `containable` for identification.
 
 === Clones
 
@@ -367,14 +407,28 @@ Container.clone.frozen?  # true
 
 === Customization
 
-You can customize how the container registers and resolves dependencies by creating your own register and resolver objects. For example, here's how to use a custom register that doesn't care if you override an existing key.
+You can customize how the container registers and resolves dependencies by creating your own register and resolver. Internally, both of these objects have access to and use `dependencies` (i.e. `Concurrent::Hash`) which stores the registered key and tuple. Example:
+
+[source,ruby]
+----
+{
+  "one" => [1, :cache],
+  "two" => [<Proc:0x000000013f613a10>, :fresh]
+}
+----
+
+Each tuple captures the dependency (value) and directive (i.e. `:cache` or `:fresh`). This allows you to have access to all information captured at registration. Below are a few examples on how to use and customize this information for your own purposes.
+
+Here's how to use a custom register that doesn't care if you override an existing key.
 
 [source,ruby]
 ----
 require "containable"
 
 class CustomRegister < Containable::Register
-  def call(key, value = nil, &block) = dependencies[namespacify(key)] = block || value
+  def call(key, value = nil, as: :cache, &block)
+    dependencies[namespacify(key)] = [block || value, as]
+  end
 end
 
 module Container
@@ -387,7 +441,7 @@ end
 Container[:one]  # "override"
 ----
 
-...and here's an example with a custom resolver that only allows specific keys to be resolved:
+Here's an example with a custom resolver that only allows specific keys to be resolved:
 
 [source,ruby]
 ----
@@ -423,7 +477,7 @@ Container[:two]    # Only use these keys: [:one, :three] (KeyError)
 Container[:three]  # 3
 ----
 
-In both cases, you only need to inject your custom register or resolver when extending your container with `Containable`. Both of these classes should inherit from either `Containable::Register` or `Containable::Resolver` to customize behavior as you like. Definitely check out the source code of both these classes to learn more and customize as desired.
+In both cases, you only need to inject your custom register or resolver when extending your container with `Containable`. Both of these classes should inherit from either `Containable::Register` or `Containable::Resolver` to customize behavior as you like. Definitely read the source code of both these classes to learn more.
 
 === Infusible
 
@@ -515,7 +569,7 @@ end
 
 You'll notice, in all of the examples, only two methods are used: `.stub!` and `.restore`. The first allows you supply keyword arguments of all dependencies you want stubbed. The last ensures your test suite is properly cleaned up so all stubs are removed and the container is restored to it's original state. If you don't restore your container after each spec, you'll end up with stubs leaking across your specs and {rspec_link} will error to the same effect as well.
 
-_Always_ use `.stub!` to set your container up for testing. Once setup, you can add more stubs by using the `.stub` method (without the bang). So, to recap, use `.stub!` as a one-liner for setup and initial stubs then use `.stub` to add more stubs after the fact. Finally, ensure you restore (i.e. `.restore`) your container for proper cleanup after each test.
+_Always_ use `.stub!` to set your container up for testing. Once set up, you can add more stubs by using the `.stub` method (without the bang). So, to recap, use `.stub!` as a one-liner for setup and initial stubs then use `.stub` to add more stubs after the fact. Finally, ensure you restore (i.e. `.restore`) your container for proper cleanup after each test.
 
 ‼️ Use of `.stub!`, while convenient for testing, should -- under no circumstances -- be used in production code because it is meant for testing purposes only.
 
