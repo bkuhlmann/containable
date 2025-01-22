@@ -3,25 +3,28 @@
 require "concurrent/hash"
 
 module Containable
+  # :reek:TooManyInstanceVariables
   # Registers dependencies for future evaluation.
   class Register
     SEPARATOR = "."
+    DIRECTIVES = %i[cache fresh].freeze
 
-    def initialize dependencies = Concurrent::Hash.new, separator: SEPARATOR
+    def initialize dependencies = Concurrent::Hash.new, separator: SEPARATOR, directives: DIRECTIVES
       @dependencies = dependencies
       @separator = separator
+      @directives = directives
       @keys = []
       @depth = 0
     end
 
-    def call key, value = nil, &block
-      namespaced_key = namespacify key
-      message = "Dependency is already registered: #{key.inspect}."
-
+    def call key, value = nil, as: :cache, &block
       warn "Registration of value is ignored since block takes precedence." if value && block
-      fail KeyError, message if dependencies.key? namespaced_key
 
-      dependencies[namespaced_key] = block || value
+      namespaced_key = namespacify key
+
+      check_duplicate key, namespaced_key
+      check_directive as
+      dependencies[namespaced_key] = [block || value, as]
     end
 
     alias register call
@@ -34,9 +37,22 @@ module Containable
 
     private
 
-    attr_reader :dependencies, :separator
+    attr_reader :dependencies, :separator, :directives
 
     attr_accessor :keys, :depth
+
+    def check_duplicate key, namespaced_key
+      message = "Dependency is already registered: #{key.inspect}."
+
+      fail KeyError, message if dependencies.key? namespaced_key
+    end
+
+    def check_directive value
+      return if directives.include? value
+
+      fail ArgumentError,
+           %(Invalid directive: #{value.inspect}. Use #{directives.map(&:inspect).join " or "}.)
+    end
 
     def visit &block
       increment

@@ -36,10 +36,10 @@ module Containable
     end
 
     def define_register target = register
-      define_method :register do |key, value = nil, &block|
+      define_method :register do |key, value = nil, as: :cache, &block|
         fail FrozenError, "Can't modify frozen container." if dependencies.frozen?
 
-        target.call key, value, &block
+        target.call key, value, as:, &block
       end
     end
 
@@ -52,7 +52,7 @@ module Containable
     end
 
     def define_each target = dependencies
-      define_method(:each) { |&block| target.each(&block) }
+      define_method(:each) { |&block| target.transform_values(&:first).each(&block) }
     end
 
     def define_each_key target = dependencies

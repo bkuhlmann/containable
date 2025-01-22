@@ -10,17 +10,29 @@ module Containable
     end
 
     def call key
-      normalized_key = key.to_s
+      tuple = fetch key
+      value, as = tuple
 
-      value = dependencies.fetch normalized_key do
-        fail KeyError, "Unable to resolve dependency: #{key.inspect}."
-      end
+      return value unless value.is_a?(Proc) && value.arity.zero?
 
-      value.is_a?(Proc) && value.arity.zero? ? dependencies[normalized_key] = value.call : value
+      process key, value, as
     end
 
     private
 
     attr_reader :dependencies
+
+    def fetch key
+      dependencies.fetch key.to_s do
+        fail KeyError, "Unable to resolve dependency: #{key.inspect}."
+      end
+    end
+
+    def process key, closure, directive
+      value = closure.call
+      dependencies[key.to_s] = [value, directive] if directive == :cache
+
+      value
+    end
   end
 end
