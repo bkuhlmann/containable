@@ -52,14 +52,14 @@ end
 
 __END__
 
-ruby 3.3.0 (2023-12-25 revision 5124f9ac75) +YJIT [arm64-darwin23.4.0]
+ruby 3.4.1 (2024-12-25 revision 48d4efcb85) +YJIT +PRISM [arm64-darwin24.2.0]
 Warming up --------------------------------------
-         Containable   805.695k i/100ms
-       Dry Container   326.053k i/100ms
+         Containable   735.071k i/100ms
+       Dry Container   329.339k i/100ms
 Calculating -------------------------------------
-         Containable      8.340M (± 0.3%) i/s -     41.896M in   5.023854s
-       Dry Container      3.403M (± 0.4%) i/s -     17.281M in   5.078142s
+         Containable      7.340M (± 1.3%) i/s  (136.25 ns/i) -     36.754M in   5.008451s
+       Dry Container      3.420M (± 0.3%) i/s  (292.43 ns/i) -     17.126M in   5.008167s
 
 Comparison:
-         Containable:  8339509.3 i/s
-       Dry Container:  3403033.3 i/s - 2.45x  slower
+         Containable:  7339590.9 i/s
+       Dry Container:  3419575.4 i/s - 2.15x  slower
