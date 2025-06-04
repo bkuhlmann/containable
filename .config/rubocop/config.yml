@@ -1,2 +1,6 @@
 inherit_gem:
   caliber: config/all.yml
+
+Naming/PredicateMethod:
+  AllowedMethods:
+    - restore
