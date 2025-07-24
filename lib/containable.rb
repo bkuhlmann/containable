@@ -15,7 +15,9 @@ module Containable
 
   def stub!(**)
     require "containable/test"
+
     extend Test
+
     stub(**)
   end
 
