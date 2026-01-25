@@ -192,7 +192,7 @@ Container.register :two, 2
 Container[:three] = 3
 ----
 
-With the above, a combination of `.register` and `.[]=` (setter) messages are used. While the latter is handy, the former should be preferred for improved readability.
+With the above, a combination of `.register` and `.[]=` (setter) messages are used. While the latter is handy, the former is preferred for improved readability.
 
 ⚠️ Due to registration being so flexible, avoid nesting closures. Example:
 
