@@ -12,14 +12,4 @@ module Containable
   end
 
   def self.[](register: Register, resolver: Resolver) = Builder.new(register:, resolver:)
-
-  def stub!(**)
-    require "containable/test"
-
-    extend Test
-
-    stub(**)
-  end
-
-  def restore = false
 end

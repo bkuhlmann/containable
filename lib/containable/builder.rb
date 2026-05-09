@@ -89,5 +89,17 @@ module Containable
     def define_frozen?
       define_method(:frozen?) { dependencies.frozen? }
     end
+
+    def define_stub
+      define_method :stub! do |**keywords|
+        require "containable/test"
+
+        extend Test
+
+        stub(**keywords)
+      end
+    end
+
+    def define_restore = define_method(:restore) { false }
   end
 end

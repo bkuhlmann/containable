@@ -8,3 +8,6 @@ detectors:
       - Containable::Register#call
   LongParameterList:
     enabled: false
+  TooManyMethods:
+    exclude:
+      - Containable::Builder
