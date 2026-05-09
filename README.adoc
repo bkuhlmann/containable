@@ -407,7 +407,7 @@ Container.clone.frozen?  # true
 
 === Customization
 
-You can customize how the container registers and resolves dependencies by creating your own register and resolver. Internally, both of these objects have access to and use `dependencies` (i.e. `Concurrent::Hash`) which stores the registered key and tuple. Example:
+You can customize how the container registers and resolves dependencies by creating your own register and resolver classes. Both classes should inherit from either `Containable::Register` or `Containable::Resolver`. Internally, each subclass has access to the `dependencies` (i.e. `Concurrent::Hash`) object which stores the registered key and associated value (tuple). Example:
 
 [source,ruby]
 ----
@@ -417,9 +417,13 @@ You can customize how the container registers and resolves dependencies by creat
 }
 ----
 
-Each tuple captures the dependency (value) and directive (i.e. `:cache` or `:fresh`). This allows you to have access to all information captured at registration. Below are a few examples on how to use and customize this information for your own purposes.
+Each tuple captures the dependency (value) and directive (i.e. `:cache` or `:fresh`). This allows you to have access to all information captured at registration. Definitely read the source code of each class to learn more.
 
-Here's how to use a custom register that doesn't care if you override an existing key.
+The following provides a few examples on how you can customize further.
+
+==== Registers
+
+Here's an example of a custom register that doesn't care if you override an existing key.
 
 [source,ruby]
 ----
@@ -440,6 +444,39 @@ end
 
 Container[:one]  # "override"
 ----
+
+Alternatively, you could specify which keys are allowed to be overwritten. Here's a modification to the above example that would make this possible:
+
+[source,ruby]
+----
+require "containable"
+require "refinements/array"
+
+class Register < Containable::Register
+  using Refinements::Array
+
+  def initialize(*, allowed_keys: %w[http logger], **)
+    super(*, **)
+    @allowed_keys = allowed_keys
+  end
+
+  protected
+
+  def check_duplicate key, namespaced_key
+    return if allowed_keys.include? namespaced_key
+
+    message = "Dependency is already registered: #{key.inspect}."
+
+    fail KeyError, message if dependencies.key? namespaced_key
+  end
+
+  private
+
+  attr_reader :allowed_keys
+end
+----
+
+==== Resolvers
 
 Here's an example with a custom resolver that only allows specific keys to be resolved:
 
@@ -476,8 +513,6 @@ Container[:one]    # 1
 Container[:two]    # Only use these keys: [:one, :three] (KeyError)
 Container[:three]  # 3
 ----
-
-In both cases, you only need to inject your custom register or resolver when extending your container with `Containable`. Both of these classes should inherit from either `Containable::Register` or `Containable::Resolver` to customize behavior as you like. Definitely read the source code of both these classes to learn more.
 
 === Infusible
 
