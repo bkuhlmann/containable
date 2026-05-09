@@ -18,7 +18,7 @@ module Containable
       process key, value, as
     end
 
-    private
+    protected
 
     attr_reader :dependencies
 

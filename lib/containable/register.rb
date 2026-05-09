@@ -35,11 +35,13 @@ module Containable
       visit(&)
     end
 
-    private
+    protected
 
     attr_reader :dependencies, :separator, :directives
 
     attr_accessor :keys, :depth
+
+    def namespacify(key) = keys[..depth].append(key).join separator
 
     def check_duplicate key, namespaced_key
       message = "Dependency is already registered: #{key.inspect}."
@@ -54,6 +56,8 @@ module Containable
            %(Invalid directive: #{value.inspect}. Use #{directives.map(&:inspect).join " or "}.)
     end
 
+    private
+
     def visit &block
       increment
       instance_eval(&block) if block
@@ -64,7 +68,5 @@ module Containable
     def increment = self.depth += 1
 
     def decrement = self.depth -= 1
-
-    def namespacify(key) = keys[..depth].append(key).join separator
   end
 end
