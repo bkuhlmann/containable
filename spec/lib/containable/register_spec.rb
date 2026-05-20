@@ -7,7 +7,7 @@ RSpec.describe Containable::Register do
 
   let(:dependencies) { {} }
 
-  describe "#register" do
+  describe "#call" do
     it "registers primitive" do
       register.call :test, 1
       expect(dependencies).to eq("test" => [1, :cache])
