@@ -76,6 +76,10 @@ RSpec.shared_examples "a container" do
 
       expect(container["one.two.test"]).to eq(1)
     end
+
+    it "answers itself" do
+      expect(container.register(:test, :test)).to eq(container)
+    end
   end
 
   describe "#namespace" do
@@ -106,6 +110,10 @@ RSpec.shared_examples "a container" do
     it "does nothing without block" do
       container.namespace :one
       expect(container.each.to_h).to eq({})
+    end
+
+    it "answers itself" do
+      expect(container.namespace(:test)).to eq(container)
     end
   end
 

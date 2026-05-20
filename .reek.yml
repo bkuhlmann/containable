@@ -11,3 +11,7 @@ detectors:
   TooManyMethods:
     exclude:
       - Containable::Builder
+  TooManyStatements:
+    exclude:
+      - Containable::Builder#initialize
+      - Containable::Register#call

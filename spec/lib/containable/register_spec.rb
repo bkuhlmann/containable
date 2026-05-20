@@ -7,7 +7,7 @@ RSpec.describe Containable::Register do
 
   let(:dependencies) { {} }
 
-  describe "#register" do
+  describe "#call" do
     it "registers primitive" do
       register.call :test, 1
       expect(dependencies).to eq("test" => [1, :cache])
@@ -33,6 +33,10 @@ RSpec.describe Containable::Register do
     it "warns when value and block are present" do
       expectation = proc { register.call(:test, 1) { 2 } }
       expect(&expectation).to output(/Registration of value is ignored/).to_stderr
+    end
+
+    it "answers itself" do
+      expect(register.call(:test, 1)).to eq(register)
     end
 
     it "fails when key exists" do
@@ -90,6 +94,10 @@ RSpec.describe Containable::Register do
     it "does nothing without block" do
       register.namespace :one
       expect(dependencies).to eq({})
+    end
+
+    it "answers itself" do
+      expect(register.namespace(:one)).to eq(register)
     end
   end
 end

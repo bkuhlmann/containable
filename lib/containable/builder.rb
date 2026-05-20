@@ -40,11 +40,15 @@ module Containable
         fail FrozenError, "Can't modify frozen container." if dependencies.frozen?
 
         target.call key, value, as:, &block
+        self
       end
     end
 
     def define_namespace target = register
-      define_method(:namespace) { |name, &block| target.namespace name, &block }
+      define_method :namespace do |name, &block|
+        target.namespace name, &block
+        self
+      end
     end
 
     def define_resolve target = resolver

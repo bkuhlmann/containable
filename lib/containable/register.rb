@@ -25,6 +25,7 @@ module Containable
       check_duplicate key, namespaced_key
       check_directive as
       dependencies[namespaced_key] = [block || value, as]
+      self
     end
 
     alias register call
@@ -33,6 +34,7 @@ module Containable
       keys.clear if depth.zero?
       keys.append name
       visit(&)
+      self
     end
 
     protected
