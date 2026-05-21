@@ -110,7 +110,7 @@ module Container
 end
 ----
 
-With the above, `1` (literal) will be associated with the `:demo` key. This is perfect for registering literals, constants, or any objects you immediately want evaluated or have a reference to. To lazily register a dependency, use a block with parameters:
+With the above, `1` (literal) will be associated with the `:demo` key. This is perfect for registering literals, constants, or any objects you immediately want evaluated or have a reference to. To lazy register a dependency, use a block with parameters:
 
 [source,ruby]
 ----
@@ -155,7 +155,7 @@ end
 Use `:cache` and `:fresh` to direct how your closures will be resolved. Here's what each does:
 
 * `+:cache+`: Ensures the same object is answered each time the key is resolved. In the above example, this means the `one` dependency will always answer the _same_ instance of an `Object` when resolved. This is default behavior so you don't need to define this key and is only shown for explicit illustration purposes.
-* `+:fresh+`: Ensures a new object is answered each time the key is resolved. In the above example, this means that the `two` dependency will always answer a _different_ instance of an `Object`. You want to use this when you want to lazily resolve a dependency while still wanting a new instance each time.
+* `+:fresh+`: Ensures a new object is answered each time the key is resolved. In the above example, this means that the `two` dependency will always answer a _different_ instance of an `Object`. You want to use this when you want to lazy resolve a dependency while still wanting a new instance each time.
 
 💡 The `as` key is only applied when using a closure with no parameters and is ignored otherwise. This means you don't need to supply this key when using literals.
 
@@ -188,8 +188,15 @@ module Container
   register :one, 1
 end
 
+# Single (preferred)
 Container.register :two, 2
+
+# Single (setter)
 Container[:three] = 3
+
+# Multiples.
+Container.register(:four, 4)
+         .register(:five, 5)
 ----
 
 With the above, a combination of `.register` and `.[]=` (setter) messages are used. While the latter is handy, the former is preferred for improved readability.
@@ -246,7 +253,7 @@ Container[:two]                # #<Proc:0x000000012e9f8718 /demo:23>
 Container[:three]              # #<Proc:0x000000012e9f8628 /demo:24 (lambda)>
 ----
 
-With the above, you can see `:one` was immediately resolved to the value of `1` even though it was wrapped in a closure to begin with. This happened because the closure had no parameters so was safe to resolve. Again, this allows you to lazily resolve a dependency until you need it.
+With the above, you can see `:one` was immediately resolved to the value of `1` even though it was wrapped in a closure to begin with. This happened because the closure had no parameters so was safe to resolve. Again, this allows you to lazy resolve a dependency until you need it.
 
 For keys `:two` and `:three`, we have a closure that has at least one parameter so remains a closure. This allows you to supply required arguments later. Here's a closer look of using the `:two` and `:three` dependencies:
 
@@ -277,7 +284,65 @@ Container[:two]    # #<Object:0x000000012d237728>
 Container[:two]    # #<Object:0x000000012d2de550>
 ----
 
-Notice `one` always answers the same instance of an `Object` while `two` always answers a new instance of `Object`. By using `:fresh`, this allows you to lazily evaluate your closure while disabling default caching support.
+Notice `one` always answers the same instance of an `Object` while `two` always answers a new instance of `Object`. By using `:fresh`, this allows you to lazy evaluate your closure while disabling default caching support.
+
+=== Merges
+
+You can merge dependencies from another container into your current container. Consider the following containers:
+
+[source,ruby]
+----
+module Primary
+  extend Containable
+
+  register :zero, 0
+end
+
+module Secondary
+  extend Containable
+
+  namespace :one do
+    register :two, 2
+  end
+
+  register :three, 3
+end
+
+module Other
+  extend Containable
+
+  register :four, 4
+end
+----
+
+With the above, this means you can do the following:
+
+[source,ruby]
+----
+# Merge a single dependency.
+Primary.merge Secondary, :three
+Primary[:three]  # 3
+
+# Merge multiple dependencies.
+Primary.merge Secondary, "one.two", :three
+Primary["one.two"]  # 2
+Primary[:three]     # 3
+
+# Merge with a namespace.
+Primary.merge Secondary, "one.two", :three, namespace: :top
+Primary["top.one.two"]  # 2
+Primary["top.three"]    # 3
+
+# Merge as fresh (normally, the default is cache).
+Primary.merge Secondary, "one.two", as: :fresh
+
+# Merge with repeated messages since it answers itself.
+Primary.merge(Secondary, :three)
+       .merge(Other, :four)
+
+Primary[:three]  # 3
+Primary[:four]   # 4
+----
 
 === Namespaces
 
@@ -315,6 +380,16 @@ Container["one.blue"]      # "blue"
 Container["two.green"]     # "green"
 Container["three.silver"]  # "silver"
 ----
+
+You can also send multiple messages to create a namespace register a dependency:
+
+[source,]
+----
+Container.namespace(:one)
+         .register(:two, 2)
+----
+
+This is a convenience that should only be used in rare situations because defining your namespaces and associated dependencies using block syntax improves readability.
 
 === Enumeration
 
