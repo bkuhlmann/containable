@@ -56,6 +56,46 @@ RSpec.describe Containable::Register do
     end
   end
 
+  describe "#merge" do
+    let(:other) { {"apple" => "Apple", "vegetables.spinach" => "Spinach"} }
+
+    it "merges container as cache" do
+      register.merge other, "apple", "vegetables.spinach"
+
+      expect(dependencies).to eq(
+        "apple" => ["Apple", :cache],
+        "vegetables.spinach" => ["Spinach", :cache]
+      )
+    end
+
+    it "merges container as fresh" do
+      register.merge other, "apple", "vegetables.spinach", as: :fresh
+
+      expect(dependencies).to eq(
+        "apple" => ["Apple", :fresh],
+        "vegetables.spinach" => ["Spinach", :fresh]
+      )
+    end
+
+    it "merges container with namespace" do
+      register.merge other, "apple", "vegetables.spinach", namespace: :test
+
+      expect(dependencies).to eq(
+        "test.apple" => ["Apple", :cache],
+        "test.vegetables.spinach" => ["Spinach", :cache]
+      )
+    end
+
+    it "doesn't merge when no keys are given" do
+      register.merge other
+      expect(dependencies).to eq({})
+    end
+
+    it "answers itself" do
+      expect(register.merge(other)).to eq(register)
+    end
+  end
+
   describe "#namespace" do
     it "registers cached namespaced dependency" do
       register.namespace :one do

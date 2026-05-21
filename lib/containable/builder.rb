@@ -44,6 +44,13 @@ module Containable
       end
     end
 
+    def define_merge target: register
+      define_method :merge do |other, *keys, namespace: nil, as: :cache|
+        target.merge(other, *keys, namespace:, as:)
+        self
+      end
+    end
+
     def define_namespace target = register
       define_method :namespace do |name, &block|
         target.namespace name, &block

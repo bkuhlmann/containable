@@ -30,6 +30,11 @@ module Containable
 
     alias register call
 
+    def merge other, *keys, namespace: nil, as: :cache
+      keys.each { call [namespace, it].compact.join("."), other[it], as: }
+      self
+    end
+
     def namespace(name, &)
       keys.clear if depth.zero?
       keys.append name

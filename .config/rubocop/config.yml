@@ -4,3 +4,7 @@ inherit_gem:
 Naming/PredicateMethod:
   AllowedMethods:
     - restore
+Metrics/ParameterLists:
+  Exclude:
+    - lib/containable/builder.rb
+    - lib/containable/register.rb

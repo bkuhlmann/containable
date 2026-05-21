@@ -82,7 +82,24 @@ RSpec.shared_examples "a container" do
     end
   end
 
-  describe "#namespace" do
+  describe ".merge" do
+    let :other do
+      container.dup.register(:apple, "Apple").register("vegetables.spinach", "Spinach")
+    end
+
+    it "merges container" do
+      container.merge other, :apple, "vegetables.spinach"
+      result = container.each.with_object({}) { |(key, value), all| all[key] = value }
+
+      expect(result).to eq("apple" => "Apple", "vegetables.spinach" => "Spinach")
+    end
+
+    it "answers itself" do
+      expect(container.merge(other, :apple)).to eq(container)
+    end
+  end
+
+  describe ".namespace" do
     it "registers namespaced dependency" do
       container.namespace :one do
         namespace :two do
@@ -279,7 +296,7 @@ RSpec.shared_examples "a container" do
     end
   end
 
-  describe "#restore" do
+  describe ".restore" do
     it "answers false" do
       expect(container.restore).to be(false)
     end
