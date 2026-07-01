@@ -7,7 +7,7 @@ module Containable
 
     alias [] resolve
 
-    def stub(**overrides)
+    def stub **overrides
       @originals ||= dependencies.dup
 
       overrides.each do |key, value|
