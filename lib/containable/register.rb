@@ -31,7 +31,9 @@ module Containable
     alias register call
 
     def merge other, *keys, namespace: nil, as: :cache
-      keys.each { call [namespace, it].compact.join("."), other[it], as: }
+      computed_keys = keys.empty? ? other.keys : keys
+
+      computed_keys.each { call [namespace, it].compact.join("."), other[it], as: }
       self
     end
 

@@ -83,19 +83,20 @@ RSpec.shared_examples "a container" do
   end
 
   describe ".merge" do
-    let :other do
-      container.dup.register(:apple, "Apple").register("vegetables.spinach", "Spinach")
+    let(:other) { container.dup.register(:apple, "Apple").register("nuts.acorn", "Acorn") }
+
+    it "merges entire container when no keys are specified" do
+      container.merge other
+      expect(container.keys).to eq(["apple", "nuts.acorn"])
     end
 
-    it "merges container" do
-      container.merge other, :apple, "vegetables.spinach"
-      result = container.each.with_object({}) { |(key, value), all| all[key] = value }
-
-      expect(result).to eq("apple" => "Apple", "vegetables.spinach" => "Spinach")
+    it "merges specific keys only" do
+      container.merge other, :apple
+      expect(container.keys).to contain_exactly("apple")
     end
 
     it "answers itself" do
-      expect(container.merge(other, :apple)).to eq(container)
+      expect(container.merge(other)).to eq(container)
     end
   end
 

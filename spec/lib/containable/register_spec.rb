@@ -86,9 +86,13 @@ RSpec.describe Containable::Register do
       )
     end
 
-    it "doesn't merge when no keys are given" do
+    it "merges everything when no keys are given" do
       register.merge other
-      expect(dependencies).to eq({})
+
+      expect(dependencies).to eq(
+        "apple" => ["Apple", :cache],
+        "vegetables.spinach" => ["Spinach", :cache]
+      )
     end
 
     it "answers itself" do
