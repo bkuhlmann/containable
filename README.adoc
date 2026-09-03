@@ -319,11 +319,16 @@ With the above, this means you can do the following:
 
 [source,ruby]
 ----
-# Merge a single dependency.
+# Merge all dependencies.
+Primary.merge Secondary
+Primary["one.two"]  # 2
+Primary["three"]    # 3
+
+# Merge specific dependency.
 Primary.merge Secondary, :three
 Primary[:three]  # 3
 
-# Merge multiple dependencies.
+# Merge multiple specific dependencies.
 Primary.merge Secondary, "one.two", :three
 Primary["one.two"]  # 2
 Primary[:three]     # 3
@@ -333,7 +338,7 @@ Primary.merge Secondary, "one.two", :three, namespace: :top
 Primary["top.one.two"]  # 2
 Primary["top.three"]    # 3
 
-# Merge as fresh (normally, the default is cache).
+# Merge as fresh (default is cache).
 Primary.merge Secondary, "one.two", as: :fresh
 
 # Merge with repeated messages since it answers itself.
@@ -391,6 +396,35 @@ Container.namespace(:one)
 
 This is a convenience that should only be used in rare situations because defining your namespaces and associated dependencies using block syntax improves readability.
 
+=== Keys
+
+You can check if a key exists or not either by symbol or string. Example:
+
+[source,ruby]
+----
+require "containable"
+
+module Container
+  extend Containable
+
+  register :one, 1
+  register :two, 2
+end
+----
+
+Given the above, this means you can do the following
+
+[source,ruby]
+----
+Container.key? :one    # true
+Container.key? "one"   # true
+Container.key? :two    # true
+Container.key? :bogus  # false
+Container.keys         # ["one", "two"]
+----
+
+💡 Prefer strings for keys, especially when using namespaces.
+
 === Enumeration
 
 Enumeration is possible but limited. Given the following:
@@ -418,11 +452,6 @@ Container.each { |key, value| puts "#{key}=#{value}" }
 Container.each_key { |key| puts "Key: #{key}" }
 # Key: one
 # Key: two
-
-Container.key? :one   # false
-Container.key? "one"  # true
-
-Container.keys        # ["one", "two"]
 ----
 
 === Freezing
