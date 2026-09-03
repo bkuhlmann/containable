@@ -188,7 +188,12 @@ RSpec.shared_examples "a container" do
   end
 
   describe ".key?" do
-    it "answers true when found" do
+    it "answers true when found (symbol)" do
+      container["test"] = :one
+      expect(container.key?("test")).to be(true)
+    end
+
+    it "answers true when found (string)" do
       container["test"] = "one"
       expect(container.key?("test")).to be(true)
     end

@@ -71,7 +71,7 @@ module Containable
     end
 
     def define_key? target = dependencies
-      define_method(:key?) { |name| target.key? name }
+      define_method(:key?) { |name| target.key? name.to_s }
     end
 
     def define_keys target = dependencies
