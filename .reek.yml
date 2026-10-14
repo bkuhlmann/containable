@@ -15,3 +15,5 @@ detectors:
     exclude:
       - Containable::Builder#initialize
       - Containable::Register#call
+  UnusedParameters:
+    enabled: false
